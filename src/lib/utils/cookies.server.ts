@@ -1,4 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 
 /**
  * Configuration options for setting cookies on the server side.
@@ -27,7 +28,7 @@ const DEFAULT_COOKIE_OPTIONS: Required<
 	Pick<CookieSetOptions, 'httpOnly' | 'secure' | 'sameSite' | 'path' | 'maxAge'>
 > = {
 	httpOnly: true,
-	secure: process.env.NODE_ENV === 'production',
+	secure: !dev,
 	sameSite: 'lax',
 	path: '/',
 	maxAge: 60 * 60 * 24 * 1 // 1 day

@@ -1,6 +1,6 @@
 import { fail, type ActionFailure } from '@sveltejs/kit';
 import { LoginSchema, type LoginInput } from '../schemas/login.schema.js';
-import { apiFormPost, type LoginResponse } from '../services/api.client.js';
+import { apiUrlEncoded } from '$lib/utils/api.server.js';
 import { setCookieServer } from '$lib/utils/cookies.server.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
@@ -14,6 +14,14 @@ export type LoginActionState =
 			error?: string;
 			issues?: Partial<Record<keyof LoginInput, string[]>>;
 	  };
+
+type LoginResponse = {
+	access_token: string;
+	user: {
+		role: string;
+		[key: string]: unknown;
+	};
+};
 
 export async function loginAction(
 	event: RequestEvent
@@ -49,7 +57,7 @@ export async function loginAction(
 		password: result.data.password
 	};
 
-	const res = await apiFormPost<LoginResponse>('/auth/login', body);
+	const res = await apiUrlEncoded.post<LoginResponse>('/auth/login', body);
 
 	// Check if the API response was successful
 	if (!res.success) {
@@ -64,11 +72,9 @@ export async function loginAction(
 
 	if (token && user) {
 		// Set cookies in parallel
-		await Promise.all([
-			Promise.resolve(setCookieServer(event, 'fs_at', token)),
-			Promise.resolve(setCookieServer(event, 'fs_current_udata', JSON.stringify(user))),
-			Promise.resolve(setCookieServer(event, 'fs_user_role', user.role))
-		]);
+		setCookieServer(event, 'fs_at', token);
+		setCookieServer(event, 'fs_current_udata', JSON.stringify(user));
+		setCookieServer(event, 'fs_user_role', user.role);
 
 		return {
 			success: true
